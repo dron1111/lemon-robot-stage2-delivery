@@ -1,0 +1,43 @@
+schema: lemon_robot_stage2_geometry_v1
+confirmed:
+  kinematic_chain: "Z -> J1 yaw -> J2 yaw -> J3 yaw -> J4 pitch -> J5 roll -> QC36/tool"
+  joint_center_distance_m: 0.176
+  printed_link_envelope_m: [0.220, 0.044, 0.018]
+  bench_mast_height_m: 0.220
+  arm_base_planform_m: [0.240, 0.220]
+  qc36_pattern_m: 0.036
+  joint_cartridge_od_m: 0.030
+  joint_housing_d_m: 0.0305
+  j5_hollow_roll_od_m: 0.024
+  j5_hollow_roll_cable_id_m: 0.014
+  d435_body_envelope_m: [0.090, 0.025, 0.025]
+  camera_model: Intel RealSense D435
+  camera_mounting: Eye-in-Hand
+
+simulation_provisional:
+  note: >-
+    Values below exist only to make Stage 2 RViz/Gazebo reproduction possible.
+    They are not manufacturing dimensions, measured travel, certified limits, masses,
+    or a final camera-to-tool calibration.
+  support_base_envelope_m: [1.00, 0.80, 0.25]
+  z_joint_limit_m: [0.0, 0.18]
+  j1_j2_j3_yaw_limit_rad: [-2.967059728, 2.967059728]
+  j4_pitch_limit_rad: [-1.570796327, 1.570796327]
+  j5_roll_limit_rad: [-3.141592654, 3.141592654]
+  wrist_offsets_m:
+    j3_to_j4: 0.072
+    j4_to_j5: 0.040
+    j5_to_flange: 0.034
+  camera_mount_xyz_m: [0.060, 0.040, 0.050]
+  nominal_simulation_masses_kg:
+    base_link: 30.0
+    z_column_link: 1.0
+    z_carriage_link: 0.8
+    j1_link: 0.45
+    j2_link: 0.45
+    j3_link: 0.35
+    j4_link: 0.25
+    j5_link: 0.20
+    flange_link: 0.15
+    pruner_link: 0.90
+    camera_link: 0.10
