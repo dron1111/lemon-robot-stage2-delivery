@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="lemon_robot_stage2">
+  <xacro:include filename="macros/inertial_macros.xacro"/>
+
+  <xacro:arg name="use_gz_ros2_control" default="false"/>
+  <xacro:arg name="controllers_file" default="/tmp/lemon_robot_stage2_controllers.yaml"/>
+
+  <!-- Confirmed project dimensions. -->
+  <xacro:property name="joint_ctc" value="0.176"/>
+  <xacro:property name="link_len" value="0.220"/>
+  <xacro:property name="link_w" value="0.044"/>
+  <xacro:property name="link_t" value="0.018"/>
+  <xacro:property name="bench_mast_h" value="0.220"/>
+  <xacro:property name="d435_x" value="0.090"/>
+  <xacro:property name="d435_y" value="0.025"/>
+  <xacro:property name="d435_z" value="0.025"/>
+
+  <!-- Simulation-only values; not manufacturing dimensions or measured joint limits. -->
+  <xacro:property name="base_x" value="1.00"/>
+  <xacro:property name="base_y" value="0.80"/>
+  <xacro:property name="base_z" value="0.25"/>
+  <xacro:property name="z_upper" value="0.18"/>
+  <xacro:property name="yaw_limit" value="2.967059728"/>
+  <xacro:property name="pitch_limit" value="1.570796327"/>
+  <xacro:property name="roll_limit" value="3.141592654"/>
+  <xacro:property name="j3_to_j4" value="0.072"/>
+  <xacro:property name="j4_to_j5" value="0.040"/>
+  <xacro:property name="j5_to_flange" value="0.034"/>
+  <xacro:property name="camera_x" value="0.060"/>
+  <xacro:property name="camera_y" value="0.040"/>
+  <xacro:property name="camera_z" value="0.050"/>
+
+  <material name="stage2_base"><color rgba="0.23 0.27 0.30 1"/></material>
+  <material name="stage2_arm"><color rgba="0.85 0.62 0.12 1"/></material>
+  <material name="stage2_joint"><color rgba="0.18 0.20 0.22 1"/></material>
+  <material name="stage2_tool"><color rgba="0.72 0.76 0.78 1"/></material>
+  <material name="stage2_camera"><color rgba="0.08 0.08 0.09 1"/></material>
+
+  <link name="base_footprint"/>
+  <link name="base_link">
+    <visual><origin xyz="0 0 ${base_z/2.0}" rpy="0 0 0"/><geometry><box size="${base_x} ${base_y} ${base_z}"/></geometry><material name="stage2_base"/></visual>
+    <collision><origin xyz="0 0 ${base_z/2.0}" rpy="0 0 0"/><geometry><box size="${base_x} ${base_y} ${base_z}"/></geometry></collision>
+    <xacro:box_inertial mass="30.0" x="${base_x}" y="${base_y}" z="${base_z}" origin_xyz="0 0 ${base_z/2.0}"/>
+  </link>
+  <joint name="base_footprint_joint" type="fixed"><origin xyz="0 0 0" rpy="0 0 0"/><parent link="base_footprint"/><child link="base_link"/></joint>
+
+  <link name="z_column_link">
+    <visual><origin xyz="0 0 ${base_z + bench_mast_h/2.0}" rpy="0 0 0"/><geometry><box size="0.080 0.040 ${bench_mast_h}"/></geometry><material name="stage2_joint"/></visual>
+    <collision><origin xyz="0 0 ${base_z + bench_mast_h/2.0}" rpy="0 0 0"/><geometry><box size="0.080 0.040 ${bench_mast_h}"/></geometry></collision>
+    <xacro:box_inertial mass="1.0" x="0.080" y="0.040" z="${bench_mast_h}" origin_xyz="0 0 ${base_z + bench_mast_h/2.0}"/>
+  </link>
+  <joint name="mast_mount_joint" type="fixed"><origin xyz="0 0 0" rpy="0 0 0"/><parent link="base_link"/><child link="z_column_link"/></joint>
+
+  <link name="z_carriage_link">
+    <visual><origin xyz="0 0 ${base_z + 0.035}" rpy="0 0 0"/><geometry><box size="0.112 0.080 0.070"/></geometry><material name="stage2_joint"/></visual>
+    <collision><origin xyz="0 0 ${base_z + 0.035}" rpy="0 0 0"/><geometry><box size="0.112 0.080 0.070"/></geometry></collision>
+    <xacro:box_inertial mass="0.8" x="0.112" y="0.080" z="0.070" origin_xyz="0 0 ${base_z + 0.035}"/>
+  </link>
+  <joint name="z_axis_joint" type="prismatic"><origin xyz="0 0 0" rpy="0 0 0"/><parent link="z_column_link"/><child link="z_carriage_link"/><axis xyz="0 0 1"/><limit lower="0.0" upper="${z_upper}" effort="800" velocity="0.20"/><dynamics damping="8.0" friction="2.0"/></joint>
+
+  <link name="j1_link">
+    <visual><origin xyz="${link_len/2.0 - 0.022} 0 0" rpy="0 0 0"/><geometry><box size="${link_len} ${link_w} ${link_t}"/></geometry><material name="stage2_arm"/></visual>
+    <collision><origin xyz="${link_len/2.0 - 0.022} 0 0" rpy="0 0 0"/><geometry><box size="${link_len} ${link_w} ${link_t}"/></geometry></collision>
+    <xacro:box_inertial mass="0.45" x="${link_len}" y="${link_w}" z="${link_t}" origin_xyz="${link_len/2.0 - 0.022} 0 0"/>
+  </link>
+  <joint name="j1_joint" type="revolute"><origin xyz="0 0 ${base_z + 0.055}" rpy="0 0 0"/><parent link="z_carriage_link"/><child link="j1_link"/><axis xyz="0 0 1"/><limit lower="-${yaw_limit}" upper="${yaw_limit}" effort="120" velocity="1.0"/><dynamics damping="0.5" friction="0.1"/></joint>
+
+  <link name="j2_link">
+    <visual><origin xyz="${link_len/2.0 - 0.022} 0 0" rpy="0 0 0"/><geometry><box size="${link_len} ${link_w} ${link_t}"/></geometry><material name="stage2_arm"/></visual>
+    <collision><origin xyz="${link_len/2.0 - 0.022} 0 0" rpy="0 0 0"/><geometry><box size="${link_len} ${link_w} ${link_t}"/></geometry></collision>
+    <xacro:box_inertial mass="0.45" x="${link_len}" y="${link_w}" z="${link_t}" origin_xyz="${link_len/2.0 - 0.022} 0 0"/>
+  </link>
+  <joint name="j2_joint" type="revolute"><origin xyz="${joint_ctc} 0 0" rpy="0 0 0"/><parent link="j1_link"/><child link="j2_link"/><axis xyz="0 0 1"/><limit lower="-${yaw_limit}" upper="${yaw_limit}" effort="100" velocity="1.0"/><dynamics damping="0.5" friction="0.1"/></joint>
+
+  <link name="j3_link">
+    <visual><origin xyz="0.036 0 0" rpy="0 0 0"/><geometry><box size="0.132 0.072 0.052"/></geometry><material name="stage2_joint"/></visual>
+    <collision><origin xyz="0.036 0 0" rpy="0 0 0"/><geometry><box size="0.132 0.072 0.052"/></geometry></collision>
+    <xacro:box_inertial mass="0.35" x="0.132" y="0.072" z="0.052" origin_xyz="0.036 0 0"/>
+  </link>
+  <joint name="j3_joint" type="revolute"><origin xyz="${joint_ctc} 0 0" rpy="0 0 0"/><parent link="j2_link"/><child link="j3_link"/><axis xyz="0 0 1"/><limit lower="-${yaw_limit}" upper="${yaw_limit}" effort="80" velocity="1.2"/><dynamics damping="0.4" friction="0.08"/></joint>
+
+  <link name="j4_link">
+    <visual><geometry><box size="0.058 0.050 0.040"/></geometry><material name="stage2_joint"/></visual>
+    <collision><geometry><box size="0.058 0.050 0.040"/></geometry></collision>
+    <xacro:box_inertial mass="0.25" x="0.058" y="0.050" z="0.040"/>
+  </link>
+  <joint name="j4_joint" type="revolute"><origin xyz="${j3_to_j4} 0 0" rpy="0 0 0"/><parent link="j3_link"/><child link="j4_link"/><axis xyz="0 1 0"/><limit lower="-${pitch_limit}" upper="${pitch_limit}" effort="50" velocity="1.5"/><dynamics damping="0.3" friction="0.05"/></joint>
+
+  <link name="j5_link">
+    <visual><origin xyz="0.017 0 0" rpy="0 1.570796327 0"/><geometry><cylinder radius="0.01525" length="0.068"/></geometry><material name="stage2_joint"/></visual>
+    <collision><origin xyz="0.017 0 0" rpy="0 1.570796327 0"/><geometry><cylinder radius="0.016" length="0.068"/></geometry></collision>
+    <xacro:box_inertial mass="0.20" x="0.068" y="0.032" z="0.032" origin_xyz="0.017 0 0"/>
+  </link>
+  <joint name="j5_joint" type="revolute"><origin xyz="${j4_to_j5} 0 0" rpy="0 0 0"/><parent link="j4_link"/><child link="j5_link"/><axis xyz="1 0 0"/><limit lower="-${roll_limit}" upper="${roll_limit}" effort="35" velocity="1.8"/><dynamics damping="0.2" friction="0.04"/></joint>
+
+  <link name="flange_link">
+    <visual><origin xyz="0 0 0.004" rpy="0 0 0"/><geometry><box size="0.074 0.074 0.008"/></geometry><material name="stage2_tool"/></visual>
+    <collision><origin xyz="0 0 0.004" rpy="0 0 0"/><geometry><box size="0.074 0.074 0.008"/></geometry></collision>
+    <xacro:box_inertial mass="0.15" x="0.074" y="0.074" z="0.008" origin_xyz="0 0 0.004"/>
+  </link>
+  <joint name="flange_joint" type="fixed"><origin xyz="${j5_to_flange} 0 0" rpy="0 1.570796327 0"/><parent link="j5_link"/><child link="flange_link"/></joint>
+
+  <link name="tool0"/>
+  <joint name="tool0_joint" type="fixed"><origin xyz="0 0 0.008" rpy="0 0 0"/><parent link="flange_link"/><child link="tool0"/></joint>
+
+  <link name="pruner_link">
+    <visual><origin xyz="0.085 0 0" rpy="0 0 0"/><geometry><box size="0.170 0.050 0.055"/></geometry><material name="stage2_tool"/></visual>
+    <collision><origin xyz="0.085 0 0" rpy="0 0 0"/><geometry><box size="0.170 0.050 0.055"/></geometry></collision>
+    <xacro:box_inertial mass="0.9" x="0.170" y="0.050" z="0.055" origin_xyz="0.085 0 0"/>
+  </link>
+  <joint name="pruner_joint" type="fixed"><origin xyz="0 0 0" rpy="0 0 0"/><parent link="tool0"/><child link="pruner_link"/></joint>
+
+  <link name="blade_reference"/>
+  <joint name="blade_reference_joint" type="fixed"><origin xyz="0.170 0 0" rpy="0 0 0"/><parent link="pruner_link"/><child link="blade_reference"/></joint>
+
+  <link name="camera_mount_link"/>
+  <joint name="camera_mount_joint" type="fixed"><origin xyz="${camera_x} ${camera_y} ${camera_z}" rpy="0 0 0"/><parent link="tool0"/><child link="camera_mount_link"/></joint>
+
+  <link name="camera_link">
+    <visual><origin xyz="0 0 ${d435_z/2.0}" rpy="0 0 0"/><geometry><box size="${d435_x} ${d435_y} ${d435_z}"/></geometry><material name="stage2_camera"/></visual>
+    <collision><origin xyz="0 0 ${d435_z/2.0}" rpy="0 0 0"/><geometry><box size="${d435_x} ${d435_y} ${d435_z}"/></geometry></collision>
+    <xacro:box_inertial mass="0.10" x="${d435_x}" y="${d435_y}" z="${d435_z}" origin_xyz="0 0 ${d435_z/2.0}"/>
+  </link>
+  <joint name="camera_joint" type="fixed"><origin xyz="0 0 0" rpy="0 0 0"/><parent link="camera_mount_link"/><child link="camera_link"/></joint>
+
+  <link name="camera_color_optical_frame"/>
+  <joint name="camera_optical_joint" type="fixed"><origin xyz="0 0 0" rpy="-1.570796327 0 -1.570796327"/><parent link="camera_link"/><child link="camera_color_optical_frame"/></joint>
+
+  <xacro:if value="$(arg use_gz_ros2_control)">
+    <ros2_control name="GazeboSimSystem" type="system">
+      <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+      <joint name="z_axis_joint"><command_interface name="position"><param name="min">0.0</param><param name="max">${z_upper}</param></command_interface><state_interface name="position"><param name="initial_value">0.0</param></state_interface><state_interface name="velocity"/></joint>
+      <joint name="j1_joint"><command_interface name="position"><param name="min">-${yaw_limit}</param><param name="max">${yaw_limit}</param></command_interface><state_interface name="position"><param name="initial_value">0.0</param></state_interface><state_interface name="velocity"/></joint>
+      <joint name="j2_joint"><command_interface name="position"><param name="min">-${yaw_limit}</param><param name="max">${yaw_limit}</param></command_interface><state_interface name="position"><param name="initial_value">0.0</param></state_interface><state_interface name="velocity"/></joint>
+      <joint name="j3_joint"><command_interface name="position"><param name="min">-${yaw_limit}</param><param name="max">${yaw_limit}</param></command_interface><state_interface name="position"><param name="initial_value">0.0</param></state_interface><state_interface name="velocity"/></joint>
+      <joint name="j4_joint"><command_interface name="position"><param name="min">-${pitch_limit}</param><param name="max">${pitch_limit}</param></command_interface><state_interface name="position"><param name="initial_value">0.0</param></state_interface><state_interface name="velocity"/></joint>
+      <joint name="j5_joint"><command_interface name="position"><param name="min">-${roll_limit}</param><param name="max">${roll_limit}</param></command_interface><state_interface name="position"><param name="initial_value">0.0</param></state_interface><state_interface name="velocity"/></joint>
+    </ros2_control>
+    <gazebo><plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin"><parameters>$(arg controllers_file)</parameters></plugin></gazebo>
+  </xacro:if>
+</robot>
